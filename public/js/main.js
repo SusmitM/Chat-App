@@ -1,18 +1,37 @@
 const chatForm = document.getElementById('chat-form');
 const chatMessage =document.querySelector('.chat-messages');
+const roomName = document.getElementById('room-name');
+const userList = document.getElementById('users');
+const currentUser = document.getElementById('currentUser');
+
+const { username, room } = Qs.parse(location.search, {
+    ignoreQueryPrefix: true,
+  });
 
 const socket=io();
 
+
+socket.emit('joinRoom',{username,room});
+
+socket.on('roomUsers',({room,users}) =>{
+    outputRoomName(room);
+    outputUsers(users);
+})
+
+//Display the logged User
+currentUser.innerHTML= `  ${username}`;
+ 
+// Display the welcome message
 socket.on('message', message =>{
     outputMessage(message);
 
     chatMessage.scrollTop = chatMessage.scrollHeight;
 });
-
+// Event after send btn is clicked
 chatForm.addEventListener('submit',(e) =>{
     e.preventDefault();
     const msg = e.target.elements.msg.value;
-    
+    //The msg content is emited
     socket.emit('chatMessage',msg);
 
     e.target.elements.msg.value='';
@@ -29,4 +48,16 @@ function outputMessage(message){
        ${message.text}
     </p>`;
     document.querySelector('.chat-messages').appendChild(div);
+}
+
+function outputRoomName(room){
+    roomName.innerText=room;
+}
+
+function outputUsers(users){
+    userList.innerHTML = `
+    ${users.map(user =>`<li>${user.username}</li>`).join('')
+}`;
+
+
 }
